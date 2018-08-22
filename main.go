@@ -22,11 +22,17 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func setup() *http.Server {
+func getaddr() string {
 	addr := ":" + os.Getenv("PORT")
 	if addr == ":" {
 		addr = ":8080"
 	}
+	return addr
+}
+
+func setup() *http.Server {
+
+	addr := getaddr()
 
 	s := HashServer(func(s *server) {
 		s.requestNum = 0

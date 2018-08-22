@@ -10,16 +10,25 @@ import (
 	"time"
 )
 
+func (s *server) gethashfrommap(id string) string {
+
+	if idAsInt, err := strconv.Atoi(id); err == nil {
+		if passwordHash, ok := s.hashMap[idAsInt]; ok {
+			return passwordHash
+		}
+	}
+	return ""
+}
+
 func (s *server) gethash(w http.ResponseWriter, r *http.Request) {
 
 	id := strings.TrimPrefix(r.URL.Path, "/hash/")
 	fmt.Println("Get Hash for ID:", id)
 
-	idAsInt, _ := strconv.Atoi(id)
-
-	if x, ok := s.hashMap[idAsInt]; ok {
-		fmt.Println(x)
-		w.Write([]byte(x))
+	passwordHash := s.gethashfrommap(id)
+	if passwordHash != "" {
+		fmt.Println(passwordHash)
+		w.Write([]byte(passwordHash))
 	} else {
 		message := "ERROR: Password Hash for request id: : " + id + " does not exist.\n"
 		w.Write([]byte(message))
