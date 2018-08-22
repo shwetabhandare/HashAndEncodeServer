@@ -1,39 +1,20 @@
 package main
 
 import (
-	"net/http"
-	"os"
+	"context"
 	"fmt"
 	"log"
-	"time"
-	"strings"
+	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
-	"context"
-	"strconv"
-	"crypto/sha512"
-	"encoding/base64"
+	"time"
 )
 
 type server struct {
 	requestNum int
-	router    *http.ServeMux
-	hashMap map[int] string
-}
-
-func HashServer(options ...func(*server)) *server {
-	s := &server{requestNum: 0, router: http.NewServeMux(), hashMap:make(map[int] string)}
-
-	for _, f := range options {
-		f(s)
-	}
-
-	s.router.HandleFunc("/hash", s.hash)
-	s.router.HandleFunc("/hash/", s.gethash)
-	s.router.HandleFunc("/stats", s.stats)
-	s.router.HandleFunc("/shutdown", s.shutdown)
-
-	return s
+	router     *http.ServeMux
+	hashMap    map[int]string
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -41,73 +22,11 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func (s *server) gethash(w http.ResponseWriter, r *http.Request) {
-
-	id := strings.TrimPrefix(r.URL.Path, "/hash/")
-	fmt.Println("Get Hash for ID:", id)
-
-	idAsInt, _ := strconv.Atoi(id)
-
-	if x, ok := s.hashMap[idAsInt]; ok {
-		fmt.Println(x) 
-	}
-}
-
-func (s *server) stats(w http.ResponseWriter, r *http.Request) {
-	message := "Hello " + r.URL.Path + "\n"
-	w.Write([]byte(message))
-}
-
-// 2 parameters, number, and password
-// wait for 5 seconds.
-// add to hash.
-
-func (s *server) hash(w http.ResponseWriter, r *http.Request) {
-
-	r.ParseForm()                     // Parses the request body
-	x := r.Form.Get("password") // x will be "" if parameter is not set
-	if (x != "") {
-		s.requestNum++;
-		fmt.Println(x)
-		
-		// start a 5 second timer.
-		// once timer expires, save password to map.
-		go s.saveHashToMap(s.requestNum, x)
-
-		w.Write([]byte(strconv.Itoa(s.requestNum)))
-
-	} else {
-		fmt.Printf("Didn't find password\n")
-	}
-
-}
-
-func computeHash(password string) string {
-	sha_512 := sha512.New()
-	sha_512.Write([]byte(password))
-
-	return base64.StdEncoding.EncodeToString(sha_512.Sum(nil))
-}
-
-func (s *server) saveHashToMap(num int, password string) {
-	time.Sleep(5*time.Second)
-
-	s.hashMap[num] = computeHash(password)
-
-	fmt.Printf("Added %s to map at %d\n", s.hashMap[num], num)
-}
-
-func (s *server) shutdown(w http.ResponseWriter, r *http.Request) {
-	message := "Hello " + r.URL.Path + "\n"
-	w.Write([]byte(message))
-}
-
-func setup() (*http.Server) {
+func setup() *http.Server {
 	addr := ":" + os.Getenv("PORT")
 	if addr == ":" {
 		addr = ":8080"
 	}
-	fmt.Printf("Addr: " + addr + "\n")
 
 	s := HashServer(func(s *server) {
 		s.requestNum = 0
@@ -139,18 +58,15 @@ func graceful(hs *http.Server, timeout time.Duration) {
 
 func main() {
 
-	hs := setup()
-
-	fmt.Printf("done with setup\n")
+	httpServer := setup()
 
 	go func() {
-		fmt.Printf("Running go func() \n")
-		fmt.Printf("Listening on http://0.0.0.0%s\n", hs.Addr)
+		fmt.Printf("Listening on http://0.0.0.0%s\n", httpServer.Addr)
 
-		if err := hs.ListenAndServe(); err != http.ErrServerClosed {
+		if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
 	}()
 
-	graceful(hs,  5*time.Second)
+	graceful(httpServer, 5*time.Second)
 }
