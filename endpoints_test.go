@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"net/http"
 	"testing"
 )
 
@@ -17,19 +17,80 @@ func TestComputeHashValidPassword(t *testing.T) {
 
 func TestComputeHashEmptyPassword(t *testing.T) {
 	password := ""
-	expectedHash := "z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=="
+	expectedHash := ""
 	passwordHash := computehash(password)
-	fmt.Println(passwordHash)
 
 	if passwordHash != expectedHash {
 		t.Errorf("Password hash was incorrect, got: %s, want: %s", passwordHash, expectedHash)
 	}
 }
 
-func TestGetHashFromMapValidID(t *testing.T) {
+func TestGetHashFromMapValueExists(t *testing.T) {
 
-	s := &server{requestNum: 0, router: http.NewServeMux(), hashMap: make(map[int]string)}}
+	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s.hashMap[0] = "hash1"
+	s.hashMap[1] = "hash1"
 
-	s.hashMap[requestNum] = "hash1"
+	hashValue := s.gethashfrommap("0")
+	expectedHashValue := "hash1"
 
+	if hashValue != expectedHashValue {
+		t.Errorf("Password hash value incorrect, got: %s, want: %s", hashValue, expectedHashValue)
+	}
+}
+
+func TestGetHashFromMapValueDoesNotExist(t *testing.T) {
+
+	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s.hashMap[0] = "hash1"
+	s.hashMap[1] = "hash2"
+
+	hashValue := s.gethashfrommap("2")
+	expectedHashValue := ""
+
+	if hashValue != expectedHashValue {
+		t.Errorf("Password hash value incorrect, got: %s, want: %s", hashValue, expectedHashValue)
+	}
+}
+
+func TestSaveHashToMapValidPasswordValue(t *testing.T) {
+	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+
+	s.saveHashToMap(1, "hash1")
+
+	hashValue := s.gethashfrommap("1")
+	expectedHashValue := "mNvnDYMOdqw+tUjPFe1oyGw3soU9+Rm5evpEdJHyqe1la+Uw6uB3ylEkrRVWElrdCwnJ1ejPIXCd2i6LuGeCYA=="
+
+	if hashValue != expectedHashValue {
+		t.Errorf("Password hash value incorrect, got: %s, want: %s", hashValue, expectedHashValue)
+	}
+}
+
+func TestConstructJSONNonZeroValues(t *testing.T) {
+
+	s := &server{totalRequests: 5, totalTimeInNSec: 100.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s.hashMap[0] = "hash1"
+	s.hashMap[1] = "hash2"
+
+	jsonReply := s.constructjson()
+
+	expectedJSONReply := "{\"Total\":5,\"Average\":20}"
+
+	if string(jsonReply) != expectedJSONReply {
+		t.Errorf("Password hash value incorrect, got: %s, want: %s", jsonReply, expectedJSONReply)
+	}
+}
+func TestConstructJSONZeroValues(t *testing.T) {
+
+	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s.hashMap[0] = "hash1"
+	s.hashMap[1] = "hash2"
+
+	jsonReply := s.constructjson()
+
+	expectedJSONReply := "{\"Total\":0,\"Average\":0}"
+
+	if string(jsonReply) != expectedJSONReply {
+		t.Errorf("Password hash value incorrect, got: %s, want: %s", jsonReply, expectedJSONReply)
+	}
 }

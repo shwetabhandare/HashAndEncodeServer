@@ -12,9 +12,10 @@ import (
 )
 
 type server struct {
-	requestNum int
-	router     *http.ServeMux
-	hashMap    map[int]string
+	totalRequests   int
+	totalTimeInNSec int64
+	router          *http.ServeMux
+	hashMap         map[int]string
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,8 @@ func setup() *http.Server {
 	addr := getaddr()
 
 	s := HashServer(func(s *server) {
-		s.requestNum = 0
+		s.totalRequests = 0
+		s.totalTimeInNSec = 0
 	})
 
 	hs := &http.Server{Addr: addr, Handler: s}
