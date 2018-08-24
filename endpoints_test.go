@@ -31,7 +31,7 @@ func TestGetHashFromMapValueExists(t *testing.T) {
 	s.hashMap[0] = "hash1"
 	s.hashMap[1] = "hash1"
 
-	hashValue := s.gethashfrommap("0")
+	hashValue := s.gethashfrommap(0)
 	expectedHashValue := "hash1"
 
 	if hashValue != expectedHashValue {
@@ -45,7 +45,7 @@ func TestGetHashFromMapValueDoesNotExist(t *testing.T) {
 	s.hashMap[0] = "hash1"
 	s.hashMap[1] = "hash2"
 
-	hashValue := s.gethashfrommap("2")
+	hashValue := s.gethashfrommap(2)
 	expectedHashValue := ""
 
 	if hashValue != expectedHashValue {
@@ -58,7 +58,7 @@ func TestSaveHashToMapValidPasswordValue(t *testing.T) {
 
 	s.saveHashToMap(1, "hash1")
 
-	hashValue := s.gethashfrommap("1")
+	hashValue := s.gethashfrommap(1)
 	expectedHashValue := "mNvnDYMOdqw+tUjPFe1oyGw3soU9+Rm5evpEdJHyqe1la+Uw6uB3ylEkrRVWElrdCwnJ1ejPIXCd2i6LuGeCYA=="
 
 	if hashValue != expectedHashValue {
@@ -69,8 +69,12 @@ func TestSaveHashToMapValidPasswordValue(t *testing.T) {
 func TestConstructJSONNonZeroValues(t *testing.T) {
 
 	s := &server{totalRequests: 5, totalTimeInNSec: 100.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
-	s.hashMap[0] = "hash1"
+	s.hashMap[0] = ""
 	s.hashMap[1] = "hash2"
+	s.hashMap[2] = "hash3"
+	s.hashMap[3] = "hash4"
+	s.hashMap[4] = "hash5"
+	s.hashMap[5] = "hash6"
 
 	jsonReply := s.constructjson()
 
@@ -83,8 +87,6 @@ func TestConstructJSONNonZeroValues(t *testing.T) {
 func TestConstructJSONZeroValues(t *testing.T) {
 
 	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
-	s.hashMap[0] = "hash1"
-	s.hashMap[1] = "hash2"
 
 	jsonReply := s.constructjson()
 

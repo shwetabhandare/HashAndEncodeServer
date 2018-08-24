@@ -4,7 +4,6 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,27 +15,37 @@ type statsresponse struct {
 	Average float64
 }
 
-func (s *server) gethashfrommap(id string) string {
+func (s *server) gethashfrommap(id int) string {
 
-	if idAsInt, err := strconv.Atoi(id); err == nil {
-		if passwordHash, ok := s.hashMap[idAsInt]; ok {
-			return passwordHash
-		}
+	if passwordHash, ok := s.hashMap[id]; ok {
+		return passwordHash
 	}
 	return ""
 }
 
+func getidfromurl(urlpath string) int {
+
+	id := strings.TrimPrefix(urlpath, "/hash/")
+	if idAsInt, err := strconv.Atoi(id); err == nil {
+		return idAsInt
+	}
+	return -1
+}
+
 func (s *server) gethash(w http.ResponseWriter, r *http.Request) {
 
-	id := strings.TrimPrefix(r.URL.Path, "/hash/")
-	fmt.Println("Get Hash for ID:", id)
+	id := getidfromurl(r.URL.Path)
+	if id == -1 {
+		message := "ERROR: Invalid request number provided in the URL: " + r.URL.Path + "\n"
+		w.Write([]byte(message))
+		return
+	}
 
 	passwordHash := s.gethashfrommap(id)
 	if passwordHash != "" {
-		fmt.Println(passwordHash)
 		w.Write([]byte(passwordHash))
 	} else {
-		message := "ERROR: Password Hash for request id: : " + id + " does not exist.\n"
+		message := "ERROR: Password Hash for request id: " + strconv.Itoa(id) + " does not exist.\n"
 		w.Write([]byte(message))
 	}
 }
@@ -47,7 +56,6 @@ func (s *server) hash(w http.ResponseWriter, r *http.Request) {
 	passwordFromForm := r.Form.Get("password")
 	if passwordFromForm != "" {
 		s.totalRequests++
-		fmt.Println(passwordFromForm)
 
 		go s.saveHashToMap(s.totalRequests, passwordFromForm)
 
@@ -60,11 +68,14 @@ func (s *server) hash(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (s *server) getnumberhashed() int {
+	return len(s.hashMap) - 1
+}
 func (s *server) constructjson() []byte {
 
 	averageTime := 0.0
 	if s.totalRequests > 0 {
-		averageTime = float64(s.totalTimeInNSec) / float64(s.totalRequests)
+		averageTime = float64(s.totalTimeInNSec) / float64(s.getnumberhashed())
 	} else {
 		averageTime = 0.0
 	}
