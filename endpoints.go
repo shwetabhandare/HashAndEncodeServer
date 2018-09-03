@@ -58,7 +58,7 @@ func (s *server) hash(w http.ResponseWriter, r *http.Request) {
 	if passwordFromForm != "" {
 		s.totalRequests++
 
-		go s.saveHashToMap(s.totalRequests, passwordFromForm)
+		go s.savetohashmap(s.totalRequests, passwordFromForm)
 
 		w.Write([]byte(strconv.Itoa(s.totalRequests)))
 
@@ -76,7 +76,7 @@ func (s *server) constructjson() []byte {
 
 	averageTime := 0.0
 	if s.totalRequests > 0 {
-		timeInMicroSeconds := s.totalTimeInNSec * 1000;
+		timeInMicroSeconds := s.totalTimeInNSec / 1000;
 		averageTime = float64(timeInMicroSeconds) / float64(s.getnumberhashed())
 	} else {
 		averageTime = 0.0
@@ -103,14 +103,16 @@ func computehash(password string) string {
 	return ""
 }
 
-func (s *server) saveHashToMap(num int, password string) {
+func (s *server) savetohashmap(num int, password string) {
 	time.Sleep(5 * time.Second)
 
+	// Calculating time to process requests.
 	start := time.Now()
 	t := time.Now()
 	s.hashMap[num] = computehash(password)
 	elapsed := t.Sub(start)
 
+	//fmt.Printf("Added %s to map at: %d\n", password, num)
 	s.totalTimeInNSec += elapsed.Nanoseconds()
 }
 

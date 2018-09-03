@@ -60,7 +60,6 @@ func (s *server) waituntilshutdown(hs *http.Server, timeout time.Duration) {
 
 
 	for true {
- 		fmt.Println("Infinite Loop 2")
     	if (len(s.hashMap) < s.totalRequests) {
 			time.Sleep(time.Second)
 		} else {
@@ -71,11 +70,10 @@ func (s *server) waituntilshutdown(hs *http.Server, timeout time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	fmt.Printf("\nShutdown with timeout: %s\n", timeout)
-
 	if err := hs.Shutdown(ctx); err != nil {
 		fmt.Printf("Error: %v\n", err)
 	} else {
+		fmt.Printf(string(s.constructjson()))
 		fmt.Println("Server stopped")
 	}
 }

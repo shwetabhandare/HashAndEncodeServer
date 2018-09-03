@@ -56,7 +56,7 @@ func TestGetHashFromMapValueDoesNotExist(t *testing.T) {
 func TestSaveHashToMapValidPasswordValue(t *testing.T) {
 	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
 
-	s.saveHashToMap(1, "hash1")
+	s.savetohashmap(1, "hash1")
 
 	hashValue := s.gethashfrommap(1)
 	expectedHashValue := "mNvnDYMOdqw+tUjPFe1oyGw3soU9+Rm5evpEdJHyqe1la+Uw6uB3ylEkrRVWElrdCwnJ1ejPIXCd2i6LuGeCYA=="
@@ -69,7 +69,6 @@ func TestSaveHashToMapValidPasswordValue(t *testing.T) {
 func TestConstructJSONNonZeroValues(t *testing.T) {
 
 	s := &server{totalRequests: 5, totalTimeInNSec: 100.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
-	s.hashMap[0] = ""
 	s.hashMap[1] = "hash2"
 	s.hashMap[2] = "hash3"
 	s.hashMap[3] = "hash4"
@@ -78,7 +77,7 @@ func TestConstructJSONNonZeroValues(t *testing.T) {
 
 	jsonReply := s.constructjson()
 
-	expectedJSONReply := "{\"Total\":5,\"Average\":20}"
+	expectedJSONReply := "{\"Total\":5,\"Average\":0}"
 
 	if string(jsonReply) != expectedJSONReply {
 		t.Errorf("Password hash value incorrect, got: %s, want: %s", jsonReply, expectedJSONReply)

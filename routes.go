@@ -12,10 +12,6 @@ func HashServer(options ...func(*server)) *server {
 		shutdownReq: make(chan bool),
 	}
 
-	for _, f := range options {
-		f(s)
-	}
-
 	s.router.HandleFunc("/hash", s.hash)
 	s.router.HandleFunc("/hash/", s.gethash)
 	s.router.HandleFunc("/stats", s.stats)
