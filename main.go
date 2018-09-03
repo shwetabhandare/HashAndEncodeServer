@@ -16,6 +16,7 @@ type server struct {
 	totalTimeInNSec int64
 	router          *http.ServeMux
 	hashMap         map[int]string
+	shutdownReq     chan bool
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +32,7 @@ func getaddr() string {
 	return addr
 }
 
-func setup() *http.Server {
+func setup() (*http.Server, *server) {
 
 	addr := getaddr()
 
@@ -42,15 +43,30 @@ func setup() *http.Server {
 
 	hs := &http.Server{Addr: addr, Handler: s}
 
-	return hs
+	return hs, s
 }
 
-func graceful(hs *http.Server, timeout time.Duration) {
+func (s *server) graceful(hs *http.Server, timeout time.Duration) {
 	stop := make(chan os.Signal, 1)
 
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	<-stop
+	select {
+	case sig := <-stop:
+		fmt.Printf("Shutdown request signal: %v\n", sig)
+	case sig := <-s.shutdownReq:
+		fmt.Printf("Shutdown request received: %v\n", sig)
+	}
+
+
+	for true {
+ 		fmt.Println("Infinite Loop 2")
+    	if (len(s.hashMap) < s.totalRequests) {
+			time.Sleep(time.Second)
+		} else {
+			break
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -66,7 +82,7 @@ func graceful(hs *http.Server, timeout time.Duration) {
 
 func main() {
 
-	httpServer := setup()
+	httpServer, s := setup()
 
 	go func() {
 		fmt.Printf("Listening on http://0.0.0.0%s\n", httpServer.Addr)
@@ -76,5 +92,5 @@ func main() {
 		}
 	}()
 
-	graceful(httpServer, 5*time.Second)
+	s.graceful(httpServer, 5*time.Second)
 }

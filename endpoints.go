@@ -69,7 +69,7 @@ func (s *server) hash(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) getnumberhashed() int {
-	return len(s.hashMap) - 1
+	return len(s.hashMap)
 }
 func (s *server) constructjson() []byte {
 
@@ -115,4 +115,5 @@ func (s *server) saveHashToMap(num int, password string) {
 func (s *server) shutdown(w http.ResponseWriter, r *http.Request) {
 	message := "Hello " + r.URL.Path + "\n"
 	w.Write([]byte(message))
+	s.shutdownReq <- true
 }

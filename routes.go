@@ -5,7 +5,12 @@ import (
 )
 
 func HashServer(options ...func(*server)) *server {
-	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s := &server{totalRequests: 0, 
+		totalTimeInNSec: 0.0, 
+		router: http.NewServeMux(), 
+		hashMap: make(map[int]string),
+		shutdownReq: make(chan bool),
+	}
 
 	for _, f := range options {
 		f(s)
