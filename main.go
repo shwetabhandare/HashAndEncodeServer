@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"sync"
 )
 
 type server struct {
@@ -17,6 +18,7 @@ type server struct {
 	router          *http.ServeMux
 	hashMap         map[int]string
 	shutdownReq     chan bool
+	lock            *sync.Mutex
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

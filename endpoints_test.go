@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"testing"
+	"sync"
 )
 
 func TestComputeHashValidPassword(t *testing.T) {
@@ -27,7 +28,7 @@ func TestComputeHashEmptyPassword(t *testing.T) {
 
 func TestGetHashFromMapValueExists(t *testing.T) {
 
-	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string), lock: new(sync.Mutex)}
 	s.hashMap[0] = "hash1"
 	s.hashMap[1] = "hash1"
 
@@ -41,7 +42,7 @@ func TestGetHashFromMapValueExists(t *testing.T) {
 
 func TestGetHashFromMapValueDoesNotExist(t *testing.T) {
 
-	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string), lock: new(sync.Mutex)}
 	s.hashMap[0] = "hash1"
 	s.hashMap[1] = "hash2"
 
@@ -54,7 +55,7 @@ func TestGetHashFromMapValueDoesNotExist(t *testing.T) {
 }
 
 func TestSaveHashToMapValidPasswordValue(t *testing.T) {
-	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string), lock: new(sync.Mutex)}
 
 	s.savetohashmap(1, "hash1")
 
@@ -68,7 +69,7 @@ func TestSaveHashToMapValidPasswordValue(t *testing.T) {
 
 func TestConstructJSONNonZeroValues(t *testing.T) {
 
-	s := &server{totalRequests: 5, totalTimeInNSec: 100.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s := &server{totalRequests: 5, totalTimeInNSec: 100.0, router: http.NewServeMux(), hashMap: make(map[int]string), lock: new (sync.Mutex)}
 	s.hashMap[1] = "hash2"
 	s.hashMap[2] = "hash3"
 	s.hashMap[3] = "hash4"
@@ -85,7 +86,7 @@ func TestConstructJSONNonZeroValues(t *testing.T) {
 }
 func TestConstructJSONZeroValues(t *testing.T) {
 
-	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string)}
+	s := &server{totalRequests: 0, totalTimeInNSec: 0.0, router: http.NewServeMux(), hashMap: make(map[int]string), lock: new (sync.Mutex)}
 
 	jsonReply := s.constructjson()
 
