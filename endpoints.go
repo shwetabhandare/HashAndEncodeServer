@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"fmt"
 )
 
 type statsresponse struct {
@@ -75,7 +76,8 @@ func (s *server) constructjson() []byte {
 
 	averageTime := 0.0
 	if s.totalRequests > 0 {
-		averageTime = float64(s.totalTimeInNSec) / float64(s.getnumberhashed())
+		timeInMicroSeconds := s.totalTimeInNSec * 1000;
+		averageTime = float64(timeInMicroSeconds) / float64(s.getnumberhashed())
 	} else {
 		averageTime = 0.0
 	}
@@ -113,7 +115,6 @@ func (s *server) saveHashToMap(num int, password string) {
 }
 
 func (s *server) shutdown(w http.ResponseWriter, r *http.Request) {
-	message := "Hello " + r.URL.Path + "\n"
-	w.Write([]byte(message))
+	fmt.Printf(string(s.constructjson()))
 	s.shutdownReq <- true
 }

@@ -46,7 +46,7 @@ func setup() (*http.Server, *server) {
 	return hs, s
 }
 
-func (s *server) graceful(hs *http.Server, timeout time.Duration) {
+func (s *server) waituntilshutdown(hs *http.Server, timeout time.Duration) {
 	stop := make(chan os.Signal, 1)
 
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -92,5 +92,5 @@ func main() {
 		}
 	}()
 
-	s.graceful(httpServer, 5*time.Second)
+	s.waituntilshutdown(httpServer, 5*time.Second)
 }
