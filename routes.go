@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"sync"
 )
 
 func HashServer(options ...func(*server)) *server {
@@ -11,7 +10,7 @@ func HashServer(options ...func(*server)) *server {
 		router: http.NewServeMux(), 
 		hashMap: make(map[int]string),
 		shutdownReq: make(chan bool),
-		lock: new(sync.Mutex),
+		passwordToHash: make(chan string),
 	}
 
 	s.router.HandleFunc("/hash", s.hash)
