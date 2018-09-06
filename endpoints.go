@@ -58,25 +58,25 @@ func (s *server) gethash(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) handlepassword(pwd string, out chan <- int) {
-	s.totalRequests ++;
-	out <- s.totalRequests;
-	go s.savetohashmap(s.totalRequests, pwd)
-}
-
 func (s *server) hash(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 	passwordFromForm := r.Form.Get("password")
 
-	out := make(chan int)
+	id := <- s.nextId
 
-	go s.handlepassword(passwordFromForm, out)
+	// id is guaranteed to be unique.
+	go s.savetohashmap(id, passwordFromForm)
 
-   select {
-   case totalRequests := <- out:
-		w.Write([]byte(strconv.Itoa(totalRequests)))
-   }	
+	w.Write([]byte(strconv.Itoa(id)))
+}
+
+func (s *server) getnextid() {
+
+	for {
+		s.totalRequests ++ 
+		s.nextId <- s.totalRequests
+	}
 }
 
 func (s *server) getnumberhashed() int {

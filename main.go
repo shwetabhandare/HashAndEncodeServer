@@ -18,6 +18,7 @@ type server struct {
 	hashMap            map[int]string
 	shutdownReq        chan bool
 	passwordToHash     chan string
+	nextId             chan int
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
