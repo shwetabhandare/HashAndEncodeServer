@@ -61,11 +61,13 @@ func (s *server) hash(w http.ResponseWriter, r *http.Request) {
 	if passwordFromForm != "" {
 		s.lock.Lock()
 		s.totalRequests++
+
+		reqid := s.totalRequests
+
 		s.lock.Unlock()
+		go s.savetohashmap(reqid, passwordFromForm)
 
-		go s.savetohashmap(s.totalRequests, passwordFromForm)
-
-		w.Write([]byte(strconv.Itoa(s.totalRequests)))
+		w.Write([]byte(strconv.Itoa(reqid)))
 
 	} else {
 		message := "ERROR: Unable to find password in the POST request. Found: " + r.Form.Encode() + " instead" + "\n"
