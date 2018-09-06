@@ -65,10 +65,8 @@ func (s *server) waituntilshutdown(hs *http.Server, timeout time.Duration) {
 	for true {
 
 		s.lock.Lock()
-
 		numHashed := len(s.hashMap)
 		numReq  := s.totalRequests
-
 		s.lock.Unlock()
 
     	if numHashed < numReq {
