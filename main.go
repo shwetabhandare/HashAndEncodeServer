@@ -9,16 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"sync"
 )
 
 type server struct {
-	totalRequests   int
-	totalTimeInNSec int64
-	router          *http.ServeMux
-	hashMap         map[int]string
-	shutdownReq     chan bool
-	lock            *sync.Mutex
+	totalRequests      int
+	totalTimeInNSec    int64
+	router             *http.ServeMux
+	hashMap            map[int]string
+	shutdownReq        chan bool
+	passwordToHash     chan string
+	nextId             chan int
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +44,7 @@ func setup() (*http.Server, *server) {
 	})
 
 	hs := &http.Server{Addr: addr, Handler: s}
+
 
 	return hs, s
 }
