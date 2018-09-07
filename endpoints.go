@@ -12,16 +12,14 @@ import (
 )
 
 type statsresponse struct {
-	Total   int
-	Average float64
+	Total   int `json:"total"`
+	Average float64 `json:"average"`
 }
 
-func (s *server) gethashfrommap(id int, out chan <-string) {
+func (s *server) retrievehash() {
+	for {
 
-	if passwordHash, ok := s.hashMap[id]; ok {
-		out <- passwordHash
 	}
-	out <- ""
 }
 
 func getidfromurl(urlpath string) int {
@@ -31,6 +29,19 @@ func getidfromurl(urlpath string) int {
 		return idAsInt
 	}
 	return -1
+}
+func (s *server) handlehashrequest() {
+	for {
+		payloadReceived := <- s.payloadChan
+
+		id := payloadReceived.reqid;
+
+		fmt.Printf("Getting hash for id: %d, %s\n", id, s.hashMap[id])
+
+		payloadReceived.hash = s.hashMap[id]
+
+		s.getHashChan  <- payloadReceived.hash
+	}
 }
 
 func (s *server) gethash(w http.ResponseWriter, r *http.Request) {
@@ -42,13 +53,14 @@ func (s *server) gethash(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out := make(chan string)
+	payload := payload{reqid: id, password: "", hash: ""}
 
-	// We still run this function as a goroutine, but this time,
-	// the channel that we made is also provided
-	go s.gethashfrommap(id, out)	
+	s.payloadChan <- payload
 
-	passwordHash := <- out
+	passwordHash := <- s.getHashChan
+
+	fmt.Printf("Received hash: %s\n", passwordHash)
+
 
 	if passwordHash != "" {
 		w.Write([]byte(passwordHash))
@@ -58,10 +70,46 @@ func (s *server) gethash(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) handlepassword(pwd string, out chan <- int) {
-	s.totalRequests ++;
-	out <- s.totalRequests;
-	go s.savetohashmap(s.totalRequests, pwd)
+func (s *server) handlepasswordhashing() {
+	fmt.Printf("Starting handle password hashing")
+
+	for {
+
+		payloadReceived := <- s.hashChan
+
+		fmt.Printf("Received id: %d, password: %s to hash\n", payloadReceived.reqid, payloadReceived.password)
+
+		time.Sleep(5 * time.Second)
+
+		// Calculating time to process requests.
+		start := time.Now()
+		t := time.Now()
+
+		password := payloadReceived.password
+		id := payloadReceived.reqid
+
+		s.hashMap[id] = computehash(password)
+
+		fmt.Printf("Hashed id: %d, password: %s to hash\n", id, s.hashMap[id])
+
+		elapsed := t.Sub(start)
+
+	//fmt.Printf("Added %s to map at: %d\n", password, num)
+		s.totalTimeInNSec += elapsed.Nanoseconds()
+
+	}	
+}
+
+func (s *server) getid() {
+	fmt.Printf("Starting handle payload")
+
+	for {
+
+		s.totalRequests = s.totalRequests + 1;
+		fmt.Printf("sending id: %d \n", s.totalRequests)
+		s.getId  <- s.totalRequests;
+
+	}	
 }
 
 func (s *server) hash(w http.ResponseWriter, r *http.Request) {
@@ -69,14 +117,13 @@ func (s *server) hash(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	passwordFromForm := r.Form.Get("password")
 
-	out := make(chan int)
+	reqid := <- s.getId
 
-	go s.handlepassword(passwordFromForm, out)
+	w.Write([]byte(strconv.Itoa(reqid)))
 
-   select {
-   case totalRequests := <- out:
-		w.Write([]byte(strconv.Itoa(totalRequests)))
-   }	
+	payload := payload{reqid: reqid, password: passwordFromForm, hash: ""}
+
+	s.hashChan <- payload
 }
 
 func (s *server) getnumberhashed() int {

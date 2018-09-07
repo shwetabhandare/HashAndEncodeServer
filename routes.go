@@ -10,13 +10,19 @@ func HashServer(options ...func(*server)) *server {
 		router: http.NewServeMux(), 
 		hashMap: make(map[int]string),
 		shutdownReq: make(chan bool),
-		passwordToHash: make(chan string),
+		getId: make(chan int),
+		payloadChan: make(chan payload),
+		hashChan: make(chan payload),
 	}
 
 	s.router.HandleFunc("/hash", s.hash)
 	s.router.HandleFunc("/hash/", s.gethash)
 	s.router.HandleFunc("/stats", s.stats)
 	s.router.HandleFunc("/shutdown", s.shutdown)
+
+	go s.getid()
+	go s.handlepasswordhashing()
+	go s.handlehashrequest()
 
 	return s
 }

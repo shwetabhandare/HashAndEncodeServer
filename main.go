@@ -11,14 +11,28 @@ import (
 	"time"
 )
 
+type payload struct {
+	reqid int 
+	password string
+	hash string
+}
+
+type stats struct {
+	totalTimeInNsec int64
+}
+
 type server struct {
+	router             *http.ServeMux
 	totalRequests      int
 	totalTimeInNSec    int64
-	router             *http.ServeMux
 	hashMap            map[int]string
 	shutdownReq        chan bool
-	passwordToHash     chan string
+	getId              chan int
+	payloadChan        chan payload
+	hashChan           chan payload
+	getHashChan        chan string
 }
+
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Hash and Encode Server", "Shweta Bhandare")
@@ -83,6 +97,8 @@ func (s *server) waituntilshutdown(hs *http.Server, timeout time.Duration) {
 func main() {
 
 	httpServer, s := setup()
+
+	fmt.Printf("Starting go func...")
 
 	go func() {
 		fmt.Printf("Listening on http://0.0.0.0%s\n", httpServer.Addr)
